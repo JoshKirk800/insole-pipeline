@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+tmp*/
+
+# Personal data stays local: scans (3D meshes, gait/pressure, scan ids), outlines made from photos, and every
+# generated design. Re-create with acquire_scan.py and insole_pipeline.py.
+foot_scan_data*/
+generated_insoles*/
+coupon_plates/

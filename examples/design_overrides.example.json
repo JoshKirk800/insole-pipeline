@@ -1,0 +1,8 @@
+{
+  "right": {
+    "fill_medial": 0.60,
+    "correction_mm": 2.25,
+    "arch_zone_peak": 28,
+    "label": "Arch Support"
+  }
+}
