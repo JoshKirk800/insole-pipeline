@@ -83,7 +83,7 @@ def get_scan_id(link):
     for attempt in range(3):
         if link is None:
             link = ask("Paste your Fleet Feet fit id link (or the scan id): ")
-        sid = acquire_scan.find_scan_id(link) if link else None
+        sid = acquire_scan.resolve_scan_id(link) if link else None      # follows email click-tracking redirects
         if sid:
             return sid
         print(f"No scan id found in that link.\n{CONSOLE_HELP}\n")

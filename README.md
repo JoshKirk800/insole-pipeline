@@ -23,8 +23,9 @@ plate, then asks which format you want:
 Options: `python insole.py [LINK] --format bambu|orca|prusa|stl|all --workdir DIR --yes`, and
 `--shoe-outline-left/-right`, `--shoe-profile`, `--overrides` to use a factory-insole outline, shoe underside values
 or per-foot overrides (see Inputs). Everything for one scan goes in `<workdir>/<id8>/` (`scan/`, `designs/`, `export/`,
-`run.log`). The link must contain the scan id (the email's "View 3D Scan" link does; the address bar after the page
-loads does not); the CLI prints how to get it if it can't find one.
+`run.log`). Paste the "View 3D Scan" link from the Fleet Feet results email as it is: the CLI follows its click-tracking
+redirect (a `...ct.sendgrid.net/ls/click?upn=...` address) to find the scan id without loading the page. The address bar
+after the fit id page has loaded has no id (the page strips it); the CLI then prints how to get one.
 
 ## Step by step
 

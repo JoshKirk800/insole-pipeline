@@ -31,6 +31,7 @@ import struct
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from urllib.parse import unquote
@@ -62,7 +63,7 @@ class Missing(Exception):
 def find_scan_id(text):
     """Scan id from a Fleet Feet fit id link (`...&scan=<id>`), a my.volumental.com/<id>/ link, or the id itself; None
     if there is none. (The fit id page strips `scan=` from the address bar, so a link copied from the browser after
-    loading usually has no id - use the email's "View 3D Scan" link or the console snippet in this file's docstring.)"""
+    loading has no id; use the email's "View 3D Scan" link - see resolve_scan_id - or the console snippet above.)"""
     text = unquote(text.strip())
     m = re.search(r"[?&#]scan=([0-9a-f-]{8,64})(?![0-9a-z-])", text, re.I)    # not `scanned=...`
     if m:
@@ -73,8 +74,41 @@ def find_scan_id(text):
     return text.lower() if re.fullmatch(r"[0-9a-f-]{8,64}", text, re.I) else None
 
 
-def parse_scan_id(text):
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def resolve_scan_id(text, max_hops=6):
+    """find_scan_id, and if the text is a link without an id, follow its redirects one hop at a time (without loading the
+    final page) until a Location carries one. Fleet Feet emails link through a SendGrid click-tracking address
+    (u<digits>.ct.sendgrid.net/ls/click?upn=...) that 302-redirects to the fit id page with `scan=<id>`."""
     sid = find_scan_id(text)
+    url = text.strip()
+    if sid or not re.match(r"https?://", url, re.I):
+        return sid
+    opener = urllib.request.build_opener(_NoRedirect)
+    for _ in range(max_hops):
+        try:
+            opener.open(urllib.request.Request(url, headers=UA), timeout=30)
+            return None                                   # reached a page: no redirect left to follow
+        except urllib.error.HTTPError as e:
+            loc = e.headers.get("Location")
+            if e.code not in (301, 302, 303, 307, 308) or not loc:
+                return None
+            url = urllib.parse.urljoin(url, loc)
+            if re.match(r"https?://", url, re.I) is None:
+                return None
+            sid = find_scan_id(url)
+            if sid:
+                return sid
+        except (urllib.error.URLError, TimeoutError):
+            return None
+    return None
+
+
+def parse_scan_id(text):
+    sid = resolve_scan_id(text)
     if not sid:
         raise SystemExit(f"no scan id found in {text!r}")
     return sid

@@ -4,6 +4,7 @@
 import os
 import sys
 import unittest
+import urllib.error
 from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -36,6 +37,52 @@ class ScanId(unittest.TestCase):
         self.assertIsNone(acquire_scan.find_scan_id("hello world"))
         with self.assertRaises(SystemExit):
             acquire_scan.parse_scan_id("hello world")
+
+
+class Redirects(unittest.TestCase):
+    """Fleet Feet emails link through a SendGrid click-tracking redirect to the fit id page with scan=<id>."""
+
+    @staticmethod
+    def fake_opener(responses):
+        """opener whose open() raises the next canned HTTPError (a redirect) or returns normally for a page."""
+        calls = []
+
+        def open_(req, timeout=None):
+            calls.append(req.full_url)
+            code, loc = responses[len(calls) - 1]
+            if code == 200:
+                return object()
+            raise urllib.error.HTTPError(req.full_url, code, "x", {"Location": loc}, None)
+        return mock.Mock(open=open_), calls
+
+    def resolve(self, link, responses):
+        opener, calls = self.fake_opener(responses)
+        with mock.patch("urllib.request.build_opener", return_value=opener):
+            return acquire_scan.resolve_scan_id(link), calls
+
+    def test_follows_sendgrid_redirect_to_scan_param(self):
+        target = f"https://www.fleetfeet.com/fit-id/scan?scan={UID}&store=1&scanned=2&utm_source=fleetfeet"
+        sid, calls = self.resolve("https://u1.ct.sendgrid.net/ls/click?upn=u001.abc", [(302, target)])
+        self.assertEqual(sid, UID)
+        self.assertEqual(len(calls), 1)               # stops at the Location: the final page is never loaded
+
+    def test_follows_several_hops_and_relative_locations(self):
+        sid, calls = self.resolve("https://a.example/x", [(301, "/y"), (302, f"https://b.example/?scan={UID}")])
+        self.assertEqual((sid, calls[1]), (UID, "https://a.example/y"))
+
+    def test_page_without_an_id_gives_none(self):
+        self.assertIsNone(self.resolve("https://www.fleetfeet.com/fit-id/scan?store=1&scanned=2", [(200, None)])[0])
+
+    def test_non_redirect_error_and_non_http_text_are_not_followed(self):
+        self.assertIsNone(self.resolve("https://a.example/x", [(404, None)])[0])
+        with mock.patch("urllib.request.build_opener") as build:
+            self.assertIsNone(acquire_scan.resolve_scan_id("hello"))
+            build.assert_not_called()
+
+    def test_id_in_the_text_needs_no_network(self):
+        with mock.patch("urllib.request.build_opener") as build:
+            self.assertEqual(acquire_scan.resolve_scan_id(f"https://x.example/?scan={UID}"), UID)
+            build.assert_not_called()
 
 
 class Choices(unittest.TestCase):
