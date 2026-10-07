@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 JoshKirk800
 """Download everything the pipeline needs for one Fleet Feet fit id / Volumental scan.
 
     python acquire_scan.py <scan id or any URL containing it> <out_dir> [--force]
@@ -31,6 +33,7 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+from urllib.parse import unquote
 
 HOST = "https://my.volumental.com"
 UA = {"User-Agent": "Mozilla/5.0"}
@@ -56,11 +59,25 @@ class Missing(Exception):
     pass
 
 
-def parse_scan_id(text):
+def find_scan_id(text):
+    """Scan id from a Fleet Feet fit id link (`...&scan=<id>`), a my.volumental.com/<id>/ link, or the id itself; None
+    if there is none. (The fit id page strips `scan=` from the address bar, so a link copied from the browser after
+    loading usually has no id - use the email's "View 3D Scan" link or the console snippet in this file's docstring.)"""
+    text = unquote(text.strip())
+    m = re.search(r"[?&#]scan=([0-9a-f-]{8,64})(?![0-9a-z-])", text, re.I)    # not `scanned=...`
+    if m:
+        return m.group(1).lower()
     m = UUID.search(text)
-    if not m:
-        raise SystemExit(f"no scan id (uuid) found in {text!r}")
-    return m.group(0).lower()
+    if m:
+        return m.group(0).lower()
+    return text.lower() if re.fullmatch(r"[0-9a-f-]{8,64}", text, re.I) else None
+
+
+def parse_scan_id(text):
+    sid = find_scan_id(text)
+    if not sid:
+        raise SystemExit(f"no scan id found in {text!r}")
+    return sid
 
 
 def fetch(path, retries=3):

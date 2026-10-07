@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 JoshKirk800
 """Bambu Studio 3MF writers.
 
 write_3mf: two plates (left, right), each insole rotated 45 deg to fit the A1 bed.
@@ -17,6 +19,7 @@ import zipfile
 import numpy as np
 
 BED = 256.0
+LAYER_HEIGHT, WALL_LOOPS, MAX_VOLUMETRIC_SPEED = "0.2", "2", "3.5"   # strings: Bambu config values; shared with exporters.py
 PLATE_PITCH = 1.2 * BED  # Bambu Studio lays plates out 1.2x bed width apart
 ROT = np.radians(45)
 C, S = np.cos(ROT), np.sin(ROT)
@@ -85,11 +88,11 @@ def _package(out_path, resources, build, settings_objs, plates, asm_ids, process
         "filament_diameter": ["1.75"],
         "filament_is_support": ["0"],
         "filament_type": ["TPU"],
-        "layer_height": "0.2",
-        "wall_loops": "2",
+        "layer_height": LAYER_HEIGHT,
+        "wall_loops": WALL_LOOPS,
         "sparse_infill_pattern": "gyroid",
         **process,
-        "filament_max_volumetric_speed": ["3.5"],
+        "filament_max_volumetric_speed": [MAX_VOLUMETRIC_SPEED],
         "printable_area": ["0x0", "256x0", "256x256", "0x256"],
         "printable_height": "256",
         "bed_exclude_area": [],

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 JoshKirk800
 """Infill test coupons: one Bambu Studio plate of small TPU slabs, each with its own sparse infill, for choosing
 densities by feel before they go into an insole.
 

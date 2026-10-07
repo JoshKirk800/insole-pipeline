@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 JoshKirk800
 """Volumental foot scan -> custom insole STLs + Bambu Studio 3MF.
 
     python insole_pipeline.py <scan_dir> <out_root> [label]

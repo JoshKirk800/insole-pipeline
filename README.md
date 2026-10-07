@@ -1,9 +1,34 @@
 # Custom insole pipeline
 
-Volumental/Fleet Feet foot scan -> printable TPU insoles (STL) + Bambu Studio project (3MF) for a Bambu Lab A1.
+Volumental / Fleet Feet foot scan -> printable TPU insoles (STL) and project files for Bambu Studio, OrcaSlicer,
+PrusaSlicer, or any slicer (STL + settings sheet). Written for a Bambu Lab A1 and 95A TPU.
+
+## Quick start
 
 ```
 pip install -r requirements.txt
+python insole.py
+```
+
+It asks for your Fleet Feet fit id link (or the scan id), downloads the scan, builds both insoles and the infill test
+plate, then asks which format you want:
+
+| format | file | notes |
+|---|---|---|
+| Bambu Studio | `Custom_Insoles_ME3D.3mf`, `test_coupons.3mf` | native: two plates, zones and settings embedded |
+| OrcaSlicer | the same two files | Orca reads Bambu Studio projects; not tested here, check zones and presets after opening |
+| PrusaSlicer | `left_/right_insole_prusaslicer.3mf` | one file per foot; infill modifiers and settings in PrusaSlicer's own keys; checked by loading, re-exporting and slicing with PrusaSlicer's CLI |
+| STL + settings sheet | `*_insole.stl`, zone STLs, `slicer_settings.md/.json`, `zone_map.png` | any other slicer (Cura, ...): add the zones as modifiers by hand |
+
+Options: `python insole.py [LINK] --format bambu|orca|prusa|stl|all --workdir DIR --yes`, and
+`--shoe-outline-left/-right`, `--shoe-profile`, `--overrides` to use a factory-insole outline, shoe underside values
+or per-foot overrides (see Inputs). Everything for one scan goes in `<workdir>/<id8>/` (`scan/`, `designs/`, `export/`,
+`run.log`). The link must contain the scan id (the email's "View 3D Scan" link does; the address bar after the page
+loads does not); the CLI prints how to get it if it can't find one.
+
+## Step by step
+
+```
 python acquire_scan.py <scan id> foot_scan_data        # once per person: scan data + pressure steps
 python pressure_maps.py foot_scan_data                 # optional: where the load is
 python insole_pipeline.py foot_scan_data generated_insoles <label>
@@ -132,3 +157,10 @@ outline and infill zones are overlaid.
 Scans (3D foot meshes, gait and pressure data, scan ids) are biometric data. `foot_scan_data*/` and
 `generated_insoles*/` are git-ignored; keep it that way when sharing a fork, and get a person's consent before
 running the pipeline on their scan.
+
+## License
+
+GPL-3.0-or-later: see `LICENSE`. Anyone who distributes a modified version must release it under the same license
+with its source. Files the tool writes (STL, 3MF) are not covered. The dependencies are permissive (BSD, MIT,
+Apache), except `triangle`, which wraps Shewchuk's Triangle mesher: free for non-commercial use only. It is installed
+from PyPI, not shipped here; check its terms before commercial use.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 JoshKirk800
 """Factory-insole outline (mm, insole frame) from a top-down photo.
 
     python shoe_outline_from_photo.py <photo.jpg> <printed_insole.stl> <out.json>

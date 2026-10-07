@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 JoshKirk800
 """Walking pressure maps from a Volumental scan, placed in the insole frame.
 
     python pressure_maps.py <scan_dir> [--insole-dir generated_insoles/vNN_label] [--out DIR]
